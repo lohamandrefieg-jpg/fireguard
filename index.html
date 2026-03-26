@@ -324,9 +324,10 @@ button[title]:hover::before{content:'';position:absolute;bottom:calc(100% + 1px)
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;}
 .spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--accent);
   border-radius:50%;animation:spin .8s linear infinite;}
-.sync-indicator{position:fixed;top:16px;right:16px;background:var(--surface);
-  border:1px solid var(--border);border-radius:8px;padding:6px 14px;
-  font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px;z-index:50;}
+.sync-indicator{position:fixed;bottom:20px;right:20px;background:var(--surface);
+  border:1px solid var(--border);border-radius:20px;padding:5px 12px;
+  font-size:11px;color:var(--muted);display:flex;align-items:center;gap:6px;z-index:40;
+  box-shadow:0 2px 8px var(--shadow);opacity:.85;pointer-events:none;}
 .sync-dot{width:8px;height:8px;border-radius:50%;background:var(--green);}
 .sync-dot.syncing{background:var(--yellow);animation:blink 1s infinite;}
 
@@ -390,7 +391,7 @@ button[title]:hover::before{content:'';position:absolute;bottom:calc(100% + 1px)
   .sidebar.open{transform:translateX(0);}
   .menu-toggle{display:flex;}
   .mobile-nav{display:block;}
-  .sync-indicator{top:auto;bottom:calc(70px + env(safe-area-inset-bottom));right:12px;font-size:11px;padding:4px 10px;}
+  .sync-indicator{bottom:calc(76px + env(safe-area-inset-bottom));right:12px;font-size:11px;padding:4px 10px;}
 
   /* Main sem margem lateral */
   .main{margin-left:0;padding:16px;padding-top:64px;padding-bottom:calc(80px + env(safe-area-inset-bottom));}
@@ -2467,10 +2468,35 @@ window.setItem=(id,v)=>{if(!inspAtual)return;inspState[inspAtual.id][id].status=
 window.setObs=(id,v)=>{if(!inspAtual)return;inspState[inspAtual.id][id].obs=v;};
 window.removerFoto=(id)=>{if(!inspAtual)return;inspState[inspAtual.id][id].foto=null;renderChecklist();};
 window.pickFile=id=>document.getElementById('f_'+id)?.click();
+
+// Redimensiona e comprime imagem para web (max 1024px, JPEG 0.80)
+function comprimirImagem(src,maxW,maxH,quality){
+  return new Promise(resolve=>{
+    const img=new Image();
+    img.onload=()=>{
+      let w=img.naturalWidth,h=img.naturalHeight;
+      if(w>maxW){h=Math.round(h*maxW/w);w=maxW;}
+      if(h>maxH){w=Math.round(w*maxH/h);h=maxH;}
+      const cv=document.createElement('canvas');
+      cv.width=w;cv.height=h;
+      const ctx=cv.getContext('2d');
+      ctx.imageSmoothingEnabled=true;
+      ctx.imageSmoothingQuality='high';
+      ctx.drawImage(img,0,0,w,h);
+      resolve(cv.toDataURL('image/jpeg',quality||0.80));
+    };
+    img.src=src;
+  });
+}
+
 window.lerFoto=(id,ev)=>{
   const f=ev.target.files[0];if(!f)return;
   const r=new FileReader();
-  r.onload=e=>{inspState[inspAtual.id][id].foto=e.target.result;renderChecklist();};
+  r.onload=async e=>{
+    const comprimida=await comprimirImagem(e.target.result,1024,1024,0.80);
+    inspState[inspAtual.id][id].foto=comprimida;
+    renderChecklist();
+  };
   r.readAsDataURL(f);
 };
 
@@ -2623,7 +2649,22 @@ window.capturarFotoFS=()=>{
   }
 
   if(inspAtual&&inspState[inspAtual.id]&&inspState[inspAtual.id][camItemAtual]){
-    inspState[inspAtual.id][camItemAtual].foto=canvas.toDataURL('image/jpeg',0.82);
+    // Redimensiona para max 1024px mantendo proporção
+    let fw=canvas.width,fh=canvas.height;
+    const maxDim=1024;
+    if(fw>maxDim||fh>maxDim){
+      if(fw>=fh){fh=Math.round(fh*maxDim/fw);fw=maxDim;}
+      else{fw=Math.round(fw*maxDim/fh);fh=maxDim;}
+      const cv2=document.createElement('canvas');
+      cv2.width=fw;cv2.height=fh;
+      const ctx2=cv2.getContext('2d');
+      ctx2.imageSmoothingEnabled=true;
+      ctx2.imageSmoothingQuality='high';
+      ctx2.drawImage(canvas,0,0,fw,fh);
+      inspState[inspAtual.id][camItemAtual].foto=cv2.toDataURL('image/jpeg',0.85);
+    } else {
+      inspState[inspAtual.id][camItemAtual].foto=canvas.toDataURL('image/jpeg',0.85);
+    }
   }
   fecharCameraFS();
   renderChecklist();
@@ -2784,7 +2825,7 @@ window.abrirRelInsp=()=>{
         <div style="font-size:12px;color:var(--muted);margin-bottom:10px">${ci.desc}</div>
         
         ${s.obs?`<div style="font-size:13px;background:var(--surface);border-radius:6px;padding:10px;margin-bottom:10px"><strong>Observação:</strong> ${s.obs}</div>`:''}
-        ${s.foto?`<div style="margin-top:8px"><img src="${s.foto}" style="width:100%;max-height:220px;object-fit:cover;border-radius:8px;border:1px solid var(--border)"></div>`:'<div style="font-size:12px;color:var(--muted);font-style:italic">Sem foto registrada</div>'}
+        ${s.foto?`<div style="text-align:center;background:rgba(0,0,0,.06);border-radius:8px;padding:8px;margin-top:8px;"><img src="${s.foto}" style="max-width:100%;width:auto;max-height:220px;height:auto;object-fit:contain;border-radius:8px;border:1px solid var(--border);display:block;margin:0 auto"></div>`:'<div style="font-size:12px;color:var(--muted);font-style:italic">Sem foto registrada</div>'}
       </div>`;
     });
   }
@@ -2900,7 +2941,7 @@ window.abrirRelHist=async(id)=>{
         <div style="font-size:12px;color:var(--muted);margin-bottom:8px">${ci.desc}</div>
         
         ${s.obs?`<div style="font-size:13px;background:var(--surface);border-radius:6px;padding:10px;margin-bottom:8px"><strong>Observação:</strong> ${s.obs}</div>`:''}
-        ${s.foto?`<img src="${s.foto}" style="width:100%;max-height:220px;object-fit:cover;border-radius:8px;border:1px solid var(--border)">`:'<div style="font-size:12px;color:var(--muted);font-style:italic">Sem foto registrada</div>'}
+        ${s.foto?`<div style="text-align:center;background:rgba(0,0,0,.06);border-radius:8px;padding:8px;margin-top:8px;"><img src="${s.foto}" style="max-width:100%;width:auto;max-height:220px;height:auto;object-fit:contain;border-radius:8px;border:1px solid var(--border);display:block;margin:0 auto"></div>`:'<div style="font-size:12px;color:var(--muted);font-style:italic">Sem foto registrada</div>'}
       </div>`;
     });
   }
@@ -3253,7 +3294,7 @@ function gerarPDFInspecao(rel){
   const ncBlocos=(ncItems||[]).map(ci=>{
     const s=st&&st[ci.id];
     const fotoHtml=s?.foto
-      ?`<img src="${s.foto}" class="nc-img" onerror="this.style.display='none'">`
+      ?`<div style="margin-top:6px;"><img src="${s.foto}" class="nc-img" onerror="this.style.display='none'" loading="lazy"></div>`
       :`<div class="sem-foto">Sem foto registrada</div>`;
     return`<div class="nc-block">
       <div class="nc-tit">✕ ${ci.nome}</div>
@@ -3319,8 +3360,20 @@ function gerarPDFInspecao(rel){
   .nc-desc{font-size:12px;color:#666;margin-bottom:8px;}
   .nc-obs{background:#fff;border:1px solid #e5e7eb;border-radius:6px;
     padding:8px 10px;font-size:12px;margin-bottom:10px;}
-  .nc-img{width:100%;max-height:260px;object-fit:cover;border-radius:8px;
-    border:1px solid #fca5a5;display:block;margin-top:4px;}
+  .nc-img{
+    display:block;
+    max-width:320px;
+    width:100%;
+    max-height:180px;
+    height:auto;
+    object-fit:contain;
+    object-position:center;
+    border-radius:8px;
+    border:1px solid #fca5a5;
+    margin:6px 0 0;
+    image-rendering:-webkit-optimize-contrast;
+    image-rendering:crisp-edges;
+  }
   .sem-foto{font-size:12px;color:#aaa;font-style:italic;margin-top:4px;}
 
   /* RODAPÉ */
@@ -3635,7 +3688,20 @@ function gerarHTMLRelNC(inspecoes,titulo){
     .nc-title{font-weight:700;color:#dc2626;margin-bottom:4px;font-size:13px;}
     .nc-desc{font-size:12px;color:#666;margin-bottom:6px;}
     .nc-obs{background:#f9f9f9;border-radius:4px;padding:8px;font-size:12px;margin-bottom:6px;}
-    .nc-img{width:100%;max-height:180px;object-fit:cover;border-radius:6px;margin-top:6px;display:block;}
+    .nc-img{
+      display:block;
+      max-width:320px;
+      width:100%;
+      max-height:180px;
+      height:auto;
+      object-fit:contain;
+      object-position:center;
+      border-radius:6px;
+      margin-top:8px;
+      image-rendering:-webkit-optimize-contrast;
+      image-rendering:crisp-edges;
+      box-shadow:0 2px 8px rgba(0,0,0,.12);
+    }
     .footer{margin-top:32px;text-align:center;font-size:11px;color:#999;border-top:1px solid #eee;padding-top:16px;}
     @media print{
       body{padding:16px;}
@@ -3673,7 +3739,7 @@ function gerarHTMLRelNC(inspecoes,titulo){
         <div class="nc-title">✕ ${ci.nome}</div>
         <div class="nc-desc">${ci.desc}</div>
         ${s.obs?`<div class="nc-obs"><strong>Obs:</strong> ${s.obs}</div>`:''}
-        ${s.foto?`<img class="nc-img" src="${s.foto}">`:''}
+        ${s.foto?`<div style="margin-top:6px;"><img class="nc-img" src="${s.foto}" loading="lazy"></div>`:''}
       </div>`;
     });
     html+=`</div>`;
