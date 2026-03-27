@@ -2210,7 +2210,7 @@ window.editEquip=id=>{
   document.getElementById('mEquipTitulo').textContent='Editar Extintor';
   document.getElementById('qId').value=q.id;
   document.getElementById('qCod').value=q.cod||'';
-  document.getElementById('qTipo').value=q.tipo||'Pó ABC';
+  document.getElementById('qTipo').value=q.tipo||'PQS ABC';
   document.getElementById('qLocal').value=q.local||'';
   document.getElementById('qCap').value=q.cap||'';
   document.getElementById('qDataInsp').value=q.dataInsp?(q.dataInsp.substring(0,7)):'';
@@ -2399,9 +2399,12 @@ window.renderChecklist=()=>{
   if(camStreamAtual)fecharCameraFS();
   const q=inspAtual;if(!q)return;
   const st=inspState[q.id];
-  const total=CHECKLIST.length;
-  const done=CHECKLIST.filter(ci=>st[ci.id].status!==null).length;
-  const nc=CHECKLIST.filter(ci=>st[ci.id].status==='nc').length;
+  // CO2 não possui manômetro convencional — excluir item c2
+  const isCO2=(q.tipo||'').toUpperCase().includes('CO2')||(q.tipo||'').includes('CO₂');
+  const checklistAtivo=CHECKLIST.filter(ci=>!(isCO2&&ci.id==='c2'));
+  const total=checklistAtivo.length;
+  const done=checklistAtivo.filter(ci=>st[ci.id].status!==null).length;
+  const nc=checklistAtivo.filter(ci=>st[ci.id].status==='nc').length;
   const pct=Math.round(done/total*100);
   document.getElementById('checklistPanel').innerHTML=`
     <div class="checklist">
@@ -2423,7 +2426,7 @@ window.renderChecklist=()=>{
         </div>
         <div class="progress-bar"><div class="progress-fill ${nc===0?'green':''}" style="width:${pct}%"></div></div>
       </div>
-      ${CHECKLIST.map(ci=>renderItem(ci,st[ci.id])).join('')}
+      ${checklistAtivo.map(ci=>renderItem(ci,st[ci.id])).join('')}
     </div>`;
 };
 window.renderItem=(ci,s)=>{
@@ -2432,7 +2435,7 @@ window.renderItem=(ci,s)=>{
       <div class="nc-label">📋 Detalhes da Não Conformidade</div>
       <!-- FOTO -->
       <div style="margin-bottom:12px">
-        <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Foto da irregularidade</div>
+        <div style="font-size:11px;font-weight:600;color:var(--red);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Foto da irregularidade <span style="color:var(--red)">*obrigatório</span></div>
         ${s.foto
           ?`<div style="position:relative;display:inline-block;width:100%">
               <img src="${s.foto}" style="width:100%;max-height:200px;object-fit:cover;border-radius:8px;border:1px solid var(--border);display:block">
@@ -2448,8 +2451,8 @@ window.renderItem=(ci,s)=>{
       </div>
       <!-- OBSERVAÇÃO -->
       <div>
-        <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px">Observação</div>
-        <input class="form-input" style="font-size:13px" placeholder="Descreva a irregularidade encontrada..."
+        <div style="font-size:11px;font-weight:600;color:var(--red);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px">Descrição da não conformidade <span style="color:var(--red)">*obrigatório</span></div>
+        <input class="form-input" style="font-size:13px;border-color:${s.obs&&s.obs.trim()?'var(--border)':'rgba(239,68,68,.5)'}" placeholder="Descreva a irregularidade encontrada... (obrigatório)"
           value="${s.obs}" oninput="setObs('${ci.id}',this.value)">
       </div>
     </div>`:'';
@@ -2697,9 +2700,26 @@ window.fecharCamera=(id)=>{
 window.finalizarInsp=async(atualizarRecarga=false)=>{
   const q=inspAtual;if(!q)return;
   const st=inspState[q.id];
-  const pend=CHECKLIST.filter(ci=>st[ci.id].status===null);
+  // CO2 não possui manômetro — excluir c2 da validação
+  const isCO2=(q.tipo||'').toUpperCase().includes('CO2')||(q.tipo||'').includes('CO₂');
+  const checklistAtivo=CHECKLIST.filter(ci=>!(isCO2&&ci.id==='c2'));
+  const pend=checklistAtivo.filter(ci=>st[ci.id].status===null);
   if(pend.length){toast(`Preencha ${pend.length} item(ns) restante(s)`,'error');return;}
-  const nc=CHECKLIST.filter(ci=>st[ci.id].status==='nc').length;
+  // Validar NCs: foto e descrição obrigatórios
+  const ncSemDetalhe=checklistAtivo.filter(ci=>{
+    const s=st[ci.id];
+    return s.status==='nc'&&(!s.foto||!s.obs||!s.obs.trim());
+  });
+  if(ncSemDetalhe.length){
+    toast(`Preencha foto e descrição para ${ncSemDetalhe.length} não conformidade(s)`,'error');
+    // Destacar itens com NC incompleta
+    ncSemDetalhe.forEach(ci=>{
+      const el=document.getElementById('item_'+ci.id);
+      if(el){el.style.outline='2px solid var(--red)';el.style.borderRadius='8px';el.scrollIntoView({behavior:'smooth',block:'center'});}
+    });
+    return;
+  }
+  const nc=checklistAtivo.filter(ci=>st[ci.id].status==='nc').length;
   if(nc===0&&!atualizarRecarga){
     document.getElementById('checklistPanel').innerHTML=`
       <div style="text-align:center;padding:40px 20px">
@@ -2718,12 +2738,15 @@ window.finalizarInsp=async(atualizarRecarga=false)=>{
 window.confirmarInsp=async(comRecarga)=>{
   const q=inspAtual;if(!q)return;
   const st=inspState[q.id];
+  // CO2 não possui manômetro
+  const isCO2=(q.tipo||'').toUpperCase().includes('CO2')||(q.tipo||'').includes('CO₂');
+  const checklistAtivo=CHECKLIST.filter(ci=>!(isCO2&&ci.id==='c2'));
   const today=new Date().toISOString().split('T')[0];
   const updates={dataInsp:today};
   if(comRecarga)updates.dataRecarga=today;
   setSyncing(true);
   await updateDoc(doc(db,'equipamentos',q.id),updates);
-  const ncItems=CHECKLIST.filter(ci=>st[ci.id].status==='nc');
+  const ncItems=checklistAtivo.filter(ci=>st[ci.id].status==='nc');
   const nc=ncItems.length;
   // Salvar inspeção no Firebase
   const inspDoc={
@@ -2734,10 +2757,10 @@ window.confirmarInsp=async(comRecarga)=>{
     inspectorId:currentUser?.uid||'',
     data:today,
     resultado:nc===0?'ok':'nc',
-    totalItens:CHECKLIST.length,
+    totalItens:checklistAtivo.length,
     totalNC:nc,
     comRecarga,
-    checklist:CHECKLIST.map(ci=>({id:ci.id,nome:ci.nome,status:st[ci.id].status,obs:st[ci.id].obs||'',foto:st[ci.id].foto||''})),
+    checklist:checklistAtivo.map(ci=>({id:ci.id,nome:ci.nome,status:st[ci.id].status,obs:st[ci.id].obs||'',foto:st[ci.id].foto||''})),
     criadoEm:serverTimestamp()
   };
   let inspDocId=null;
