@@ -490,6 +490,7 @@ button[title]:hover::before{content:'';position:absolute;bottom:calc(100% + 1px)
       <div class="logo-icon">🔥</div>
       <h1>Fire<span style="color:var(--accent)">Guard</span></h1>
       <p>Sistema de Inspeção de Extintores</p>
+      <p class="app-versao" onclick="abrirChangelog()" title="Ver histórico de versões" style="font-size:11px;color:var(--muted);margin-top:6px;cursor:pointer"></p>
     </div>
     <div class="err-box" id="loginErr"></div>
     <div class="form-group"><label class="form-label">E-mail</label>
@@ -605,7 +606,9 @@ button[title]:hover::before{content:'';position:absolute;bottom:calc(100% + 1px)
   <div class="sidebar">
     <div class="logo">
       <div class="logo-icon">🔥</div>
-      <div class="logo-text">Fire<span>Guard</span></div>
+      <div class="logo-text">Fire<span>Guard</span>
+        <div class="app-versao" onclick="abrirChangelog()" title="Ver histórico de versões" style="font-size:10px;font-weight:600;color:var(--muted);cursor:pointer;letter-spacing:.3px;margin-top:1px;font-family:var(--font-body,inherit)"></div>
+      </div>
     </div>
     <div class="empresa-ativa" onclick="trocarEmpresa()">
       <div class="empresa-ativa-label">🏢 Empresa ativa</div>
@@ -931,6 +934,7 @@ button[title]:hover::before{content:'';position:absolute;bottom:calc(100% + 1px)
           <div class="empresa-chip">🏢 <span id="brigEmpNome">—</span></div>
         </div>
         <div style="display:flex;gap:10px">
+          <button class="btn btn-secondary" onclick="abrirModalPlanilhaBrig()">📊 Planilha</button>
           <button class="btn btn-secondary" onclick="gerarPDFListaBrigada()">📄 Lista PDF</button>
           <button class="btn btn-primary" onclick="abrirModalBrigadista()">+ Novo Brigadista</button>
         </div>
@@ -969,9 +973,12 @@ button[title]:hover::before{content:'';position:absolute;bottom:calc(100% + 1px)
         <div class="filter-bar">
           <select class="form-input" id="brigFiltroTurno" onchange="renderBrigada()">
             <option value="">Todos os turnos</option>
-            <option value="Diurno">Diurno</option>
-            <option value="Noturno">Noturno</option>
-            <option value="Revezamento">Revezamento</option>
+            <option value="Manhã">Manhã</option>
+            <option value="Tarde">Tarde</option>
+            <option value="Noite">Noite</option>
+            <option value="Manhã / Tarde">Manhã / Tarde</option>
+            <option value="Tarde / Noite">Tarde / Noite</option>
+            <option value="Manhã / Noite">Manhã / Noite</option>
           </select>
           <select class="form-input" id="brigFiltroStatus" onchange="renderBrigada()">
             <option value="">Todos os status</option>
@@ -1261,9 +1268,12 @@ button[title]:hover::before{content:'';position:absolute;bottom:calc(100% + 1px)
           </select></div>
         <div class="form-group"><label class="form-label">Turno</label>
           <select class="form-input" id="bTurno">
-            <option value="Diurno">Diurno</option>
-            <option value="Noturno">Noturno</option>
-            <option value="Revezamento">Revezamento</option>
+            <option value="Manhã">Manhã</option>
+            <option value="Tarde">Tarde</option>
+            <option value="Noite">Noite</option>
+            <option value="Manhã / Tarde">Manhã / Tarde</option>
+            <option value="Tarde / Noite">Tarde / Noite</option>
+            <option value="Manhã / Noite">Manhã / Noite</option>
           </select></div>
       </div>
       <div class="form-row">
@@ -1278,6 +1288,35 @@ button[title]:hover::before{content:'';position:absolute;bottom:calc(100% + 1px)
             <option value="afastado">⏸ Afastado</option>
             <option value="desligado">🚫 Desligado da brigada</option>
           </select></div>
+      </div>
+      <div class="modal-divider"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <label class="form-label" style="margin:0">🎓 Treinamentos</label>
+        <button class="btn btn-secondary btn-sm" onclick="toggleTreinFormCad()">+ Adicionar treinamento</button>
+      </div>
+      <div id="bTreinsPend" style="margin-bottom:8px"></div>
+      <div id="bTreinForm" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px">
+        <div class="form-group"><label class="form-label">Tipo</label>
+          <select class="form-input" id="btTipo">
+            <option value="Formação de Brigada (NBR 14276)">Formação de Brigada (NBR 14276)</option>
+            <option value="Reciclagem de Brigada (NBR 14276)">Reciclagem de Brigada (NBR 14276)</option>
+            <option value="Primeiros Socorros">Primeiros Socorros</option>
+            <option value="Combate a Incêndio">Combate a Incêndio</option>
+            <option value="Evacuação / Abandono de Área">Evacuação / Abandono de Área</option>
+            <option value="Outro">Outro</option>
+          </select></div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Data de realização</label><input class="form-input" type="date" id="btData" onchange="sugerirValidadeCad()"></div>
+          <div class="form-group"><label class="form-label">Válido até</label><input class="form-input" type="date" id="btValidade"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group" style="margin-bottom:0"><label class="form-label">Carga horária</label><input class="form-input" id="btCarga" placeholder="Ex: 8h"></div>
+          <div class="form-group" style="margin-bottom:0"><label class="form-label">Instrutor / Empresa</label><input class="form-input" id="btInstrutor" placeholder="Opcional"></div>
+        </div>
+        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
+          <button class="btn btn-ghost btn-sm" onclick="toggleTreinFormCad(false)">Cancelar</button>
+          <button class="btn btn-primary btn-sm" onclick="addTreinPend()">✓ Adicionar à lista</button>
+        </div>
       </div>
       <div class="form-actions">
         <button class="btn btn-ghost" onclick="fecharModal('modalBrigadista')">Cancelar</button>
@@ -1596,6 +1635,47 @@ button[title]:hover::before{content:'';position:absolute;bottom:calc(100% + 1px)
   </div>
 </div>
 
+<!-- MODAL HISTÓRICO DE VERSÕES -->
+<div class="modal-overlay" id="modalChangelog">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-head">
+      <div class="modal-title">🏷 Histórico de Versões</div>
+      <button class="modal-close" onclick="fecharModal('modalChangelog')">✕</button>
+    </div>
+    <div class="modal-body" id="changelogBody"></div>
+  </div>
+</div>
+
+<!-- MODAL PLANILHA BRIGADA -->
+<div class="modal-overlay" id="modalPlanilhaBrig">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-head">
+      <div class="modal-title">📊 Planilha de Brigadistas</div>
+      <button class="modal-close" onclick="fecharModal('modalPlanilhaBrig')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+        <button class="btn btn-secondary" onclick="baixarModeloBrig()" style="justify-content:center">⬇ Baixar Modelo</button>
+        <button class="btn btn-secondary" onclick="exportarBrigXLSX()" style="justify-content:center">⬆ Exportar Cadastro</button>
+      </div>
+      <div style="background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.2);border-radius:10px;padding:12px 16px;font-size:12.5px;color:var(--blue);margin-bottom:16px">
+        ℹ️ Preencha o modelo e importe para cadastrar em massa. As fotos podem ser adicionadas depois, editando cada brigadista. Se informar a data do treinamento de brigada, o registro já entra com a validade calculada.
+      </div>
+      <div onclick="document.getElementById('brigImportInput').click()" style="border:2px dashed var(--border);border-radius:12px;padding:24px;text-align:center;cursor:pointer">
+        <div style="font-size:28px;margin-bottom:6px">📥</div>
+        <div style="font-size:13px;font-weight:600">Clique para selecionar a planilha preenchida</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:4px">.xlsx ou .xls</div>
+        <input type="file" id="brigImportInput" accept=".xlsx,.xls" style="display:none" onchange="lerExcelBrig(event)">
+      </div>
+      <div id="brigImportPreview" style="margin-top:14px"></div>
+      <div class="form-actions" id="brigImportActions" style="display:none">
+        <button class="btn btn-ghost" onclick="limparImportBrig()">Limpar</button>
+        <button class="btn btn-primary" id="btnImportarBrig" onclick="importarBrigadistas()">Importar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <!-- CÂMERA FULLSCREEN -->
@@ -1723,6 +1803,54 @@ let chartInsp=null, chartTipo=null;
 const TODAS_PERMS=['dashboard','empresas','equipamentos','inspecao','brigada','relatorios','usuarios','qrcodes'];
 const PERMS_ADMIN=['dashboard','usuarios','empresas','equipamentos','inspecao','brigada','relatorios','qrcodes'];
 const PERMS_USER=['dashboard','inspecao','equipamentos','brigada','relatorios','qrcodes'];
+
+// ── VERSÃO DO SISTEMA ──
+// Ao lançar uma atualização: incremente APP_VERSAO e adicione uma entrada NO TOPO do APP_CHANGELOG.
+const APP_VERSAO='3.1.0';
+const APP_CHANGELOG=[
+  {v:'3.1.0',data:'27/08/2026',titulo:'Melhorias no módulo Brigada',itens:[
+    'Novos turnos: Manhã, Tarde, Noite e as combinações Manhã/Tarde, Tarde/Noite e Manhã/Noite',
+    'Treinamentos podem ser lançados já na tela de cadastro do brigadista',
+    'Organograma distribui brigadistas sem líder em colunas por setor',
+    'Importação e exportação de brigadistas por planilha Excel, com modelo para download'
+  ]},
+  {v:'3.0.0',data:'27/08/2026',titulo:'Controle de versões',itens:[
+    'Número da versão visível na tela de login e na sidebar',
+    'Histórico de atualizações do sistema (este modal)'
+  ]},
+  {v:'2.0.0',data:'',titulo:'Módulo Brigada de Incêndio',itens:[
+    'Cadastro de brigadistas com foto, função, setor, turno e aptidão física',
+    'Treinamentos com controle de validade e alertas (NBR 14276)',
+    'Organograma automático da brigada com impressão em A4 paisagem',
+    'Relação nominal da brigada em PDF com assinaturas',
+    'Nova permissão de menu "Brigada" nos perfis de usuário'
+  ]},
+  {v:'1.0.0',data:'',titulo:'Sistema base',itens:[
+    'Gestão de extintores multi-empresa com perfis e permissões',
+    'Inspeções com checklist, fotos e relatórios em PDF',
+    'QR codes por equipamento, dashboard com gráficos e importação Excel'
+  ]}
+];
+window.abrirChangelog=()=>{
+  const body=document.getElementById('changelogBody');
+  body.innerHTML=APP_CHANGELOG.map((c,i)=>`
+    <div style="display:flex;gap:12px;${i<APP_CHANGELOG.length-1?'margin-bottom:18px':''}">
+      <div style="display:flex;flex-direction:column;align-items:center">
+        <span class="badge ${i===0?'ok':'pendente'}" style="white-space:nowrap">v${c.v}</span>
+        ${i<APP_CHANGELOG.length-1?'<div style="width:2px;flex:1;background:var(--border);margin-top:6px"></div>':''}
+      </div>
+      <div style="flex:1;padding-bottom:4px">
+        <div style="font-size:14px;font-weight:700">${c.titulo}${i===0?' <span style="font-size:11px;color:var(--green);font-weight:600">· atual</span>':''}</div>
+        ${c.data?`<div style="font-size:11px;color:var(--muted);margin:2px 0 6px">${c.data}</div>`:'<div style="margin-bottom:6px"></div>'}
+        <ul style="margin:0;padding-left:16px;font-size:12.5px;color:var(--muted);line-height:1.7">
+          ${c.itens.map(x=>`<li>${x}</li>`).join('')}
+        </ul>
+      </div>
+    </div>`).join('');
+  abrirModal('modalChangelog');
+};
+// Exibir versão nos pontos marcados
+document.querySelectorAll('.app-versao').forEach(el=>el.textContent='v'+APP_VERSAO);
 
 // ── QR SCAN / INICIAR DIRETO ──
 const params=new URLSearchParams(location.search);
@@ -2721,12 +2849,57 @@ window.abrirModalBrigadista=()=>{
   document.getElementById('mBrigTitulo').textContent='Novo Brigadista';
   ['bId','bNome','bSetor','bTel','bAptidao','bFotoData'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('bFuncao').value='brigadista';
-  document.getElementById('bTurno').value='Diurno';
+  document.getElementById('bTurno').value='Manhã';
   document.getElementById('bStatus').value='ativo';
   document.getElementById('bFotoPreview').innerHTML='📷';
   document.getElementById('btnRemoverFotoBrig').style.display='none';
   document.getElementById('bFotoInput').value='';
+  window._brigTreinsPend=[];renderTreinsPend();toggleTreinFormCad(false);
   abrirModal('modalBrigadista');
+};
+// ── TREINAMENTOS NO CADASTRO ──
+window._brigTreinsPend=[];
+window.toggleTreinFormCad=(mostrar)=>{
+  const f=document.getElementById('bTreinForm');if(!f)return;
+  const abrir=mostrar===undefined?f.style.display==='none':mostrar;
+  f.style.display=abrir?'block':'none';
+  if(abrir){['btData','btValidade','btCarga','btInstrutor'].forEach(id=>document.getElementById(id).value='');}
+};
+window.sugerirValidadeCad=()=>{
+  const d=document.getElementById('btData').value;
+  const v=document.getElementById('btValidade');
+  if(d&&!v.value){const x=new Date(d+'T00:00:00');x.setFullYear(x.getFullYear()+1);v.value=x.toISOString().substring(0,10);}
+};
+window.addTreinPend=()=>{
+  const data=document.getElementById('btData').value;
+  if(!data){toast('Informe a data de realização','error');return;}
+  window._brigTreinsPend.push({
+    id:Date.now().toString(36)+Math.random().toString(36).substring(2,5),
+    tipo:document.getElementById('btTipo').value,
+    data,
+    validade:document.getElementById('btValidade').value||'',
+    carga:document.getElementById('btCarga').value.trim(),
+    instrutor:document.getElementById('btInstrutor').value.trim(),
+    cert:'',foto:''
+  });
+  renderTreinsPend();toggleTreinFormCad(false);
+};
+window.delTreinPend=id=>{
+  window._brigTreinsPend=window._brigTreinsPend.filter(t=>t.id!==id);
+  renderTreinsPend();
+};
+window.renderTreinsPend=()=>{
+  const el=document.getElementById('bTreinsPend');if(!el)return;
+  const lst=window._brigTreinsPend||[];
+  el.innerHTML=lst.length
+    ?lst.map(t=>`<div class="trein-item" style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+        <div style="min-width:0">
+          <div style="font-size:12.5px;font-weight:500">${t.tipo}</div>
+          <div style="font-size:11px;color:var(--muted)">${fmtDia(t.data)}${t.validade?' · válido até '+fmtDia(t.validade):''}${t.carga?' · '+t.carga:''}${t.instrutor?' · '+t.instrutor:''}</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="delTreinPend('${t.id}')" style="padding:3px 8px;flex-shrink:0" title="Remover da lista">🗑</button>
+      </div>`).join('')
+    :'<div style="font-size:12px;color:var(--muted);padding:4px 0">Nenhum treinamento adicionado — a foto do certificado pode ser anexada depois, pela ficha.</div>';
 };
 window.lerFotoBrig=ev=>{
   const f=ev.target.files[0];if(!f)return;
@@ -2759,10 +2932,17 @@ window.salvarBrigadista=async()=>{
     empresaId:empresaAtiva.id
   };
   if(!obj.nome){toast('Informe o nome do brigadista','error');return;}
+  const pend=window._brigTreinsPend||[];
   setSyncing(true);
   try{
-    id?await updateDoc(doc(db,'brigadistas',id),obj)
-      :await addDoc(collection(db,'brigadistas'),{...obj,treinamentos:[],criadoEm:serverTimestamp()});
+    if(id){
+      const atual=brigadistas.find(x=>x.id===id);
+      if(pend.length)obj.treinamentos=[...(atual?.treinamentos||[]),...pend];
+      await updateDoc(doc(db,'brigadistas',id),obj);
+    }else{
+      await addDoc(collection(db,'brigadistas'),{...obj,treinamentos:pend,criadoEm:serverTimestamp()});
+    }
+    window._brigTreinsPend=[];
     fecharModal('modalBrigadista');toast('Brigadista salvo! ☁️');
   }catch(e){toast('Erro ao salvar: '+e.message,'error');setSyncing(false);}
 };
@@ -2772,7 +2952,14 @@ window.editBrigadista=id=>{
   document.getElementById('bId').value=b.id;
   document.getElementById('bNome').value=b.nome||'';
   document.getElementById('bFuncao').value=b.funcao||'brigadista';
-  document.getElementById('bTurno').value=b.turno||'Diurno';
+  const selTurno=document.getElementById('bTurno');
+  selTurno.value=b.turno||'Manhã';
+  if(selTurno.value!==(b.turno||'Manhã')){
+    // Valor antigo (ex: Diurno/Noturno) — inserir opção temporária para não perder o dado
+    const opt=document.createElement('option');opt.value=b.turno;opt.textContent=b.turno+' (antigo)';
+    selTurno.appendChild(opt);selTurno.value=b.turno;
+  }
+  window._brigTreinsPend=[];renderTreinsPend();toggleTreinFormCad(false);
   document.getElementById('bSetor').value=b.setor||'';
   document.getElementById('bTel').value=b.tel||'';
   document.getElementById('bAptidao').value=b.aptidao||'';
@@ -2962,7 +3149,17 @@ window.renderOrganograma=()=>{
   html+=`<div style="display:flex;justify-content:center;gap:16px;flex-wrap:wrap;align-items:flex-start">`;
   html+=grupos.map(g=>`<div class="org-grupo">${node(g.lider,'nivel-lider','var(--blue)')}<div class="org-filhos">${g.filhos.length?g.filhos.map(mini).join(''):'<div style="font-size:11px;color:var(--muted);padding:4px 0">Sem brigadistas neste setor</div>'}</div></div>`).join('');
   if(semLider.length){
-    html+=`<div class="org-grupo"><div class="org-node" style="border-style:dashed"><span class="brig-iniciais" style="width:42px;height:42px;border:1px dashed var(--border);background:transparent">👥</span><div><div class="org-nome">${grupos.length?'Demais brigadistas':'Brigadistas'}</div><div class="org-sub">${grupos.length?'sem líder de setor':''}</div></div></div><div class="org-filhos">${semLider.map(mini).join('')}</div></div>`;
+    // Distribuir por setor, em colunas, como se cada setor tivesse um líder
+    const porSetor={};
+    semLider.forEach(b=>{const k=(b.setor||'').trim()||'Sem setor';(porSetor[k]=porSetor[k]||[]).push(b);});
+    html+=Object.keys(porSetor).sort((a,c)=>a.localeCompare(c)).map(setor=>`
+      <div class="org-grupo">
+        <div class="org-node" style="border-style:dashed">
+          <span class="brig-iniciais" style="width:42px;height:42px;border:1px dashed var(--border);background:transparent">📍</span>
+          <div><div class="org-nome">${setor}</div><div class="org-sub">${porSetor[setor].length} brigadista(s)</div></div>
+        </div>
+        <div class="org-filhos">${porSetor[setor].map(mini).join('')}</div>
+      </div>`).join('');
   }
   html+='</div></div>';
   el.innerHTML=html;
@@ -2987,7 +3184,15 @@ window.imprimirOrganograma=()=>{
   if(chefes.length&&(grupos.length||semLider.length))corpo+='<div class="ovline"></div>';
   corpo+='<div class="ogrupos">';
   corpo+=grupos.map(g=>`<div class="ogrupo">${nodeP(g.lider,'#3b82f6')}<div class="ofilhos">${g.filhos.map(miniP).join('')||'<div style="font-size:10px;color:#9ca3af;padding:4px 0">Sem brigadistas neste setor</div>'}</div></div>`).join('');
-  if(semLider.length)corpo+=`<div class="ogrupo"><div class="onode" style="border-style:dashed;border-color:#d1d5db"><div class="onome">${grupos.length?'Demais brigadistas':'Brigadistas'}</div><div class="osub">${grupos.length?'sem líder de setor':''}</div></div><div class="ofilhos">${semLider.map(miniP).join('')}</div></div>`;
+  if(semLider.length){
+    const porSetorP={};
+    semLider.forEach(b=>{const k=(b.setor||'').trim()||'Sem setor';(porSetorP[k]=porSetorP[k]||[]).push(b);});
+    corpo+=Object.keys(porSetorP).sort((a,c)=>a.localeCompare(c)).map(setor=>`
+      <div class="ogrupo">
+        <div class="onode" style="border-style:dashed;border-color:#d1d5db"><div class="onome">📍 ${setor}</div><div class="osub">${porSetorP[setor].length} brigadista(s)</div></div>
+        <div class="ofilhos">${porSetorP[setor].map(miniP).join('')}</div>
+      </div>`).join('');
+  }
   corpo+='</div>';
   const logoHtml=emp.logo
     ?`<img src="${emp.logo}" style="width:52px;height:52px;object-fit:contain;border-radius:8px">`
@@ -3114,6 +3319,144 @@ window.gerarPDFListaBrigada=()=>{
   w.document.close();
   w.onload=()=>setTimeout(()=>w.print(),300);
   setTimeout(()=>{if(!w.closed)w.print();},800);
+};
+// ── PLANILHA (IMPORTAR/EXPORTAR BRIGADISTAS) ──
+let brigImportRows=[];
+const parseDataBR=v=>{
+  if(!v)return'';
+  if(v instanceof Date&&!isNaN(v))return v.toISOString().split('T')[0];
+  const s=v.toString().trim();
+  if(s.includes('/')){const p=s.split('/');if(p.length===3&&p[2].length===4)return`${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`;}
+  if(/^\d{4}-\d{2}-\d{2}/.test(s))return s.substring(0,10);
+  return'';
+};
+const mapFuncaoBrig=v=>{
+  const s=(v||'').toString().toLowerCase();
+  if(s.includes('coord'))return'coordenador';
+  if(s.includes('chefe'))return'chefe';
+  if(s.includes('líder')||s.includes('lider'))return'lider';
+  return'brigadista';
+};
+const TURNOS_BRIG=['Manhã','Tarde','Noite','Manhã / Tarde','Tarde / Noite','Manhã / Noite'];
+const mapTurnoBrig=v=>{
+  const s=(v||'').toString().trim();
+  if(!s)return'Manhã';
+  const norm=x=>x.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z]/g,'');
+  return TURNOS_BRIG.find(t=>norm(t)===norm(s))||s;
+};
+window.abrirModalPlanilhaBrig=()=>{limparImportBrig();abrirModal('modalPlanilhaBrig');};
+window.limparImportBrig=()=>{
+  brigImportRows=[];
+  const p=document.getElementById('brigImportPreview');if(p)p.innerHTML='';
+  const a=document.getElementById('brigImportActions');if(a)a.style.display='none';
+  const i=document.getElementById('brigImportInput');if(i)i.value='';
+};
+window.baixarModeloBrig=()=>{
+  const wb=XLSX.utils.book_new();
+  const header=['Nome','Funcao','Setor','Turno','Telefone','Aptidao Fisica ate (DD/MM/AAAA)','Data Treinamento Brigada (DD/MM/AAAA)','Validade Treinamento (DD/MM/AAAA)'];
+  const exemplos=[
+    ['Carlos Mendes','Chefe da Brigada','Producao','Manhã','(62) 99999-0000','15/01/2027','10/03/2026','10/03/2027'],
+    ['Ana Souza','Lider de Setor','Galpao B','Manhã / Tarde','','','02/07/2026',''],
+    ['Rafael Lima','Brigadista','Galpao B','Noite','','','','']
+  ];
+  const ws=XLSX.utils.aoa_to_sheet([header,...exemplos]);
+  ws['!cols']=header.map((h,i)=>({wch:i===0?26:Math.max(14,h.length+2)}));
+  XLSX.utils.sheet_add_aoa(ws,[[''],['INSTRUCOES:'],['- Nome: obrigatorio'],['- Funcao: Brigadista / Lider de Setor / Chefe da Brigada / Coordenador Geral'],['- Turno: Manha / Tarde / Noite / Manha-Tarde / Tarde-Noite / Manha-Noite'],['- Datas: formato DD/MM/AAAA'],['- Validade em branco = 12 meses apos a data do treinamento'],['- Apague as linhas de exemplo antes de importar'],['- As fotos sao adicionadas depois, editando cada brigadista no sistema']],{origin:`A${exemplos.length+3}`});
+  XLSX.utils.book_append_sheet(wb,ws,'Brigadistas');
+  XLSX.writeFile(wb,'modelo_brigada_fireguard.xlsx');
+};
+window.exportarBrigXLSX=()=>{
+  const todos=brigDaEmpresa();
+  if(!todos.length){toast('Nenhum brigadista cadastrado nesta empresa','error');return;}
+  const wb=XLSX.utils.book_new();
+  const rows=[['Nome','Funcao','Setor','Turno','Telefone','Aptidao Fisica ate','Ultimo Treinamento Brigada','Validade','Situacao']];
+  todos.forEach(b=>{
+    const t=ultTreinoBrigadaNBR(b);
+    rows.push([b.nome||'',FUNCOES_BRIG[b.funcao]||'Brigadista',b.setor||'',b.turno||'',b.tel||'',
+      b.aptidao?fmtDia(b.aptidao):'',t?fmtDia(t.data):'',t?.validade?fmtDia(t.validade):'',b.status||'ativo']);
+  });
+  const ws=XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols']=rows[0].map((h,i)=>({wch:i===0?26:18}));
+  XLSX.utils.book_append_sheet(wb,ws,'Brigadistas');
+  XLSX.writeFile(wb,'brigada_'+((empresaAtiva?.nome||'fireguard').replace(/[^a-z0-9]/gi,'_').toLowerCase())+'.xlsx');
+  toast('Planilha exportada!');
+};
+window.lerExcelBrig=ev=>{
+  const f=ev.target.files[0];if(!f)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const wb=XLSX.read(e.target.result,{type:'array',cellDates:true});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+      if(rows.length<2){toast('Planilha vazia','error');return;}
+      const nomesExistentes=new Set(brigDaEmpresa().map(b=>(b.nome||'').trim().toLowerCase()));
+      brigImportRows=rows.slice(1)
+        .map((r,i)=>({r,_row:i+2}))
+        .filter(({r})=>{
+          const n=(r[0]||'').toString().trim();
+          return n&&!n.toUpperCase().startsWith('INSTRUCOES')&&!n.startsWith('-');
+        })
+        .map(({r,_row})=>{
+          const dataT=parseDataBR(r[6]);
+          let validade=parseDataBR(r[7]);
+          if(dataT&&!validade){const x=new Date(dataT+'T00:00:00');x.setFullYear(x.getFullYear()+1);validade=x.toISOString().substring(0,10);}
+          const nome=(r[0]||'').toString().trim();
+          return{_row,nome,funcao:mapFuncaoBrig(r[1]),setor:(r[2]||'').toString().trim(),
+            turno:mapTurnoBrig(r[3]),tel:(r[4]||'').toString().trim(),aptidao:parseDataBR(r[5]),
+            dataT,validade,_dup:nomesExistentes.has(nome.toLowerCase())};
+        });
+      renderImportPrevBrig();
+    }catch(err){toast('Erro ao ler arquivo: '+err.message,'error');}
+  };
+  reader.readAsArrayBuffer(f);
+};
+window.renderImportPrevBrig=()=>{
+  const p=document.getElementById('brigImportPreview');
+  const a=document.getElementById('brigImportActions');
+  if(!brigImportRows.length){p.innerHTML='<div style="text-align:center;padding:16px;color:var(--muted);font-size:13px">Nenhuma linha válida encontrada na planilha</div>';a.style.display='none';return;}
+  const dups=brigImportRows.filter(x=>x._dup).length;
+  p.innerHTML=`
+    <div style="font-size:13px;font-weight:600;margin-bottom:8px">${brigImportRows.length} brigadista(s) prontos para importar${dups?` · <span style="color:var(--yellow)">⚠ ${dups} com nome já cadastrado</span>`:''}</div>
+    <div style="max-height:220px;overflow-y:auto;border:1px solid var(--border);border-radius:10px">
+      <table style="width:100%;border-collapse:collapse;font-size:12px">
+        <thead><tr style="background:var(--surface)"><th style="padding:6px 10px;text-align:left">Nome</th><th style="padding:6px 10px;text-align:left">Função</th><th style="padding:6px 10px;text-align:left">Setor</th><th style="padding:6px 10px;text-align:left">Turno</th><th style="padding:6px 10px;text-align:left">Treinamento</th></tr></thead>
+        <tbody>${brigImportRows.map(x=>`<tr style="border-top:1px solid var(--border);${x._dup?'background:rgba(245,158,11,.08)':''}">
+          <td style="padding:6px 10px">${x._dup?'⚠ ':''}${x.nome}</td>
+          <td style="padding:6px 10px">${FUNCOES_BRIG[x.funcao]}</td>
+          <td style="padding:6px 10px">${x.setor||'—'}</td>
+          <td style="padding:6px 10px">${x.turno}</td>
+          <td style="padding:6px 10px;color:var(--muted)">${x.dataT?fmtDia(x.dataT)+' → '+fmtDia(x.validade):'—'}</td>
+        </tr>`).join('')}</tbody>
+      </table>
+    </div>
+    ${dups?'<div style="font-size:11.5px;color:var(--muted);margin-top:6px">Linhas com ⚠ serão importadas mesmo assim — exclua manualmente se forem duplicatas.</div>':''}`;
+  a.style.display='flex';
+  document.getElementById('btnImportarBrig').textContent=`Importar ${brigImportRows.length}`;
+};
+window.importarBrigadistas=async()=>{
+  if(!brigImportRows.length)return;
+  const btn=document.getElementById('btnImportarBrig');
+  btn.disabled=true;btn.textContent='Importando...';
+  setSyncing(true);
+  let ok=0;
+  try{
+    for(const x of brigImportRows){
+      const treins=x.dataT?[{id:Date.now().toString(36)+Math.random().toString(36).substring(2,5),tipo:'Formação de Brigada (NBR 14276)',data:x.dataT,validade:x.validade,carga:'',instrutor:'',cert:'',foto:''}]:[];
+      await addDoc(collection(db,'brigadistas'),{
+        nome:x.nome,funcao:x.funcao,setor:x.setor,turno:x.turno,tel:x.tel,
+        aptidao:x.aptidao,status:'ativo',foto:'',empresaId:empresaAtiva.id,
+        treinamentos:treins,criadoEm:serverTimestamp()
+      });
+      ok++;
+    }
+    toast(`${ok} brigadista(s) importado(s)! ☁️`);
+    fecharModal('modalPlanilhaBrig');limparImportBrig();
+  }catch(e){
+    toast(`Erro após ${ok} importados: ${e.message}`,'error');
+    btn.disabled=false;btn.textContent=`Importar ${brigImportRows.length}`;
+    setSyncing(false);
+  }
 };
 // ═══════════════ FIM BRIGADA ═══════════════
 
